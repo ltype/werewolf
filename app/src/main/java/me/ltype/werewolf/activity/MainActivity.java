@@ -7,19 +7,17 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import me.ltype.werewolf.R;
 import me.ltype.werewolf.constant.Constants;
-import me.ltype.werewolf.network.LCookieJar;
 import me.ltype.werewolf.network.LOKHttpClient;
+import me.ltype.werewolf.network.WebSocketClient;
 import me.ltype.werewolf.util.LLog;
 import me.ltype.werewolf.util.Utils;
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.Cookie;
 import okhttp3.HttpUrl;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -57,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
                 .addQueryParameter("uid", uid)
                 .addQueryParameter("transport", "polling")
                 .build();
-        final Request request = new Request.Builder()
+        Request request = new Request.Builder()
                 .url(url)
                 .build();
         LOKHttpClient.getClient().newCall(request).enqueue(new Callback() {
@@ -74,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
                 if (!m.find()) return;
                 try {
                     JSONObject json = new JSONObject(m.group());
-                    doReqConfirm(mUid, json.getString("sid"));
+                    doReqServerConfirm(mUid, json.getString("sid"));
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -82,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void doReqConfirm(String uid, String sid) {
+    private void doReqServerConfirm(final String uid, final String sid) {
         HttpUrl url = new HttpUrl.Builder()
                 .scheme("http")
                 .host(Constants.DOMAIN)
@@ -103,6 +101,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 LLog.d(getClass(), response.body().string());
+                WebSocketClient client = WebSocketClient.getInstance(Constants.DOMAIN, uid, sid);
+                client.connect();
             }
         });
     }

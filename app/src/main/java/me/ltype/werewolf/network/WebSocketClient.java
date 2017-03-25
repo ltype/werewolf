@@ -1,11 +1,17 @@
 package me.ltype.werewolf.network;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import me.ltype.werewolf.util.LLog;
 import okhttp3.HttpUrl;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.ws.WebSocket;
@@ -18,6 +24,7 @@ public class WebSocketClient implements WebSocketListener {
     private String mUid;
     private String mSid;
 
+    private WebSocket mWebSocket;
     private static WebSocketClient mClient;
 
     private WebSocketClient(String domain, String uid, String sid) {
@@ -31,7 +38,7 @@ public class WebSocketClient implements WebSocketListener {
         return mClient;
     }
 
-    private void connect() {
+    public void connect() {
         Request request = new Request.Builder()
                 .url(getFullUrl())
                 .build();
@@ -40,7 +47,8 @@ public class WebSocketClient implements WebSocketListener {
 
     @Override
     public void onOpen(WebSocket webSocket, Response response) {
-
+        mWebSocket = webSocket;
+        initConnection();
     }
 
     @Override
@@ -50,6 +58,15 @@ public class WebSocketClient implements WebSocketListener {
 
     @Override
     public void onMessage(ResponseBody message) throws IOException {
+        String resp = message.string();
+        LLog.d(this.getClass(), resp);
+        if (resp.equals("3probe")) {
+            checkConnection();
+            holdConnection();
+        } else if (resp.equals("3")) {
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.postDelayed(this::holdConnection, 25 * 1000);
+        }
 
     }
 
@@ -65,14 +82,34 @@ public class WebSocketClient implements WebSocketListener {
 
     private HttpUrl getFullUrl() {
         HttpUrl url = new HttpUrl.Builder()
-                .scheme("ws")
+                .scheme("http")
                 .host(mDomain)
-                .addPathSegment("engine.io")
-                .addPathSegment("default")
+                .addPathSegments("engine.io/default/")
                 .addQueryParameter("uid", mUid)
                 .addQueryParameter("sid", mSid)
                 .addQueryParameter("transport", "websocket")
                 .build();
         return url;
+    }
+
+    private void initConnection() {
+        sendMessage("2probe");
+    }
+
+    private void checkConnection() {
+        sendMessage("5");
+    }
+
+    private void holdConnection() {
+        sendMessage("2");
+    }
+
+    private void sendMessage(String msg) {
+        RequestBody body = RequestBody.create(WebSocket.TEXT, msg);
+        try {
+            mWebSocket.sendMessage(body);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

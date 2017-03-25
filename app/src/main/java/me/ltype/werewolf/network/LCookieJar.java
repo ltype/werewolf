@@ -26,13 +26,15 @@ public class LCookieJar implements CookieJar {
 
     @Override
     public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
-        mCookieStore.put(url.toString(), cookies);
+        List<Cookie> oldCookies = loadForRequest(url);
+        oldCookies.addAll(cookies);
+        mCookieStore.put(url.host(), oldCookies);
     }
 
     @Override
     public List<Cookie> loadForRequest(HttpUrl url) {
         List<Cookie> cookies = new ArrayList<>();
-        cookies = mCookieStore.containsKey(url.toString()) ? mCookieStore.get(url.toString()) : cookies;
+        cookies = mCookieStore.containsKey(url.host()) ? mCookieStore.get(url.host()) : cookies;
         return cookies;
     }
 }
