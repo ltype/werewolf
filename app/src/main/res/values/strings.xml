@@ -1,3 +1,16 @@
 <resources>
-    <string name="app_name">WereWolf</string>
+    <string name="app_name">月下人狼</string>
+
+    <string name="title_rooms">房间</string>
+    <string name="title_lobby">大厅</string>
+    <string name="title_manual">手册</string>
+    <string name="title_setting">设置</string>
+
+    <string name="nav_drawer_item_rooms">@string/title_rooms</string>
+    <string name="nav_drawer_item_lobby">@string/title_lobby</string>
+    <string name="nav_drawer_item_manual">@string/title_manual</string>
+    <string name="nav_drawer_item_setting">@string/title_setting</string>
+
+    <string name="nav_drawer_open">展开</string>
+    <string name="nav_drawer_close">折叠</string>
 </resources>

@@ -1,6 +1,5 @@
 package me.ltype.werewolf.activity;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 import org.json.JSONException;
@@ -22,14 +21,13 @@ import okhttp3.HttpUrl;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
     private String mUid = Utils.generateRandomUid(24);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        doReaConnectSid();
     }
 
     private void doReaConnectSid() {

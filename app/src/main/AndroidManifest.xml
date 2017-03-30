@@ -9,6 +9,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:name=".app.LApplication"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
@@ -19,6 +20,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".activity.RoomListActivity" android:label="@string/title_rooms" />
+
+        <activity android:name=".activity.LobbyActivity" android:label="@string/title_lobby" />
+
+        <activity android:name=".activity.ManualActivity" android:label="@string/title_manual" />
+
+        <activity android:name=".activity.SettingActivity" android:label="@string/title_setting" />
     </application>
 
 </manifest>
