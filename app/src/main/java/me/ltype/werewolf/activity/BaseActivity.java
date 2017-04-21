@@ -33,11 +33,8 @@ public abstract class BaseActivity extends AppCompatActivity implements Navigati
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-//            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-            if (!FlymeUtils.isFlyme()) {
-                getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && !FlymeUtils.isFlyme()) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
         }
     }
 
@@ -112,8 +109,8 @@ public abstract class BaseActivity extends AppCompatActivity implements Navigati
         mDrawerToggle.syncState();
         mDrawerLayout.addDrawerListener(mDrawerToggle);
 //        mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
-        mDrawerLayout.setStatusBarBackgroundColor(
-                ContextCompat.getColor(this, R.color.colorPrimaryDark));
+//        mDrawerLayout.setStatusBarBackgroundColor(
+//                ContextCompat.getColor(this, R.color.colorPrimaryDark));
         if (mToolbar != null) {
             mToolbar.setNavigationOnClickListener(view ->
                     mDrawerLayout.openDrawer(GravityCompat.START));
