@@ -2,91 +2,97 @@ package me.ltype.werewolf.network;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.LongSparseArray;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.observers.DisposableObserver;
+import io.reactivex.schedulers.Schedulers;
+import me.ltype.werewolf.constant.Constants;
+import me.ltype.werewolf.model.MsgRequest;
+import me.ltype.werewolf.model.MsgResponse;
 import me.ltype.werewolf.util.LLog;
+import me.ltype.werewolf.util.Utils;
 import okhttp3.HttpUrl;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okhttp3.ws.WebSocket;
-import okhttp3.ws.WebSocketCall;
-import okhttp3.ws.WebSocketListener;
-import okio.Buffer;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
+import okio.ByteString;
 
-public class WebSocketClient implements WebSocketListener {
-    private String mDomain;
-    private String mUid;
-    private String mSid;
+public class WebSocketClient extends WebSocketListener{
+    private static String mUid = Utils.generateRandomUID(24);
+    private static String mSid;
 
-    private WebSocket mWebSocket;
+    private static WebSocket mWebSocket;
     private static WebSocketClient mClient;
+    private LongSparseArray<WSCallBack> mWSCallBackArr = new LongSparseArray<WSCallBack>();
 
-    private WebSocketClient(String domain, String uid, String sid) {
-        mDomain = domain;
-        mUid = uid;
-        mSid = sid;
+    private WebSocketClient() {
     }
 
-    public static WebSocketClient getInstance(String domain, String uid, String sid) {
-        if (mClient == null) mClient = new WebSocketClient(domain, uid, sid);
+    public static WebSocketClient getInstance() {
+        if (mClient == null) mClient = new WebSocketClient();
         return mClient;
     }
-
-    public void connect() {
-        Request request = new Request.Builder()
-                .url(getFullUrl())
-                .build();
-         WebSocketCall.create(LOKHttpClient.getClient(), request).enqueue(this);
-    }
-
     @Override
     public void onOpen(WebSocket webSocket, Response response) {
-        mWebSocket = webSocket;
+        super.onOpen(webSocket, response);
         initConnection();
     }
 
     @Override
-    public void onFailure(IOException e, Response response) {
-
-    }
-
-    @Override
-    public void onMessage(ResponseBody message) throws IOException {
-        String resp = message.string();
-        LLog.d(this.getClass(), resp);
-        if (resp.equals("3probe")) {
+    public void onMessage(WebSocket webSocket, String text) {
+        super.onMessage(webSocket, text);
+        LLog.d(this.getClass(), text);
+        if (text.equals("3probe")) {
             checkConnection();
             holdConnection();
-        } else if (resp.equals("3")) {
+        } else if (text.equals("3")) {
             Handler handler = new Handler(Looper.getMainLooper());
             handler.postDelayed(this::holdConnection, 25 * 1000);
+        } else {
+            MsgResponse resp = MsgResponse.load(text);
+            if (resp == null) return;
+            mWSCallBackArr.get(resp.getId()).onSuccess(text);
+            mWSCallBackArr.delete(resp.getId());
         }
-
     }
 
     @Override
-    public void onPong(Buffer payload) {
-
+    public void onMessage(WebSocket webSocket, ByteString bytes) {
+        super.onMessage(webSocket, bytes);
     }
 
-    @Override
-    public void onClose(int code, String reason) {
-
+    public void sendMessage(String msg) {
+        mWebSocket.send(msg);
     }
 
-    private HttpUrl getFullUrl() {
+    public void sendMessage(MsgRequest req, WSCallBack callBack) {
+        mWSCallBackArr.put(req.getId(), callBack);
+        mWebSocket.send(req.toString());
+    }
+
+    private void initWebSocket(HttpUrl url) {
+        Request request = new Request.Builder().url(url).build();
+        mWebSocket = LOKHttpClient.getClient().newWebSocket(request, this);
+    }
+
+    private static HttpUrl getFullUrl(String uid, String sid) {
         HttpUrl url = new HttpUrl.Builder()
                 .scheme("http")
-                .host(mDomain)
+                .host(Constants.DOMAIN)
                 .addPathSegments("engine.io/default/")
-                .addQueryParameter("uid", mUid)
-                .addQueryParameter("sid", mSid)
+                .addQueryParameter("uid", uid)
+                .addQueryParameter("sid", sid)
                 .addQueryParameter("transport", "websocket")
                 .build();
         return url;
@@ -104,12 +110,36 @@ public class WebSocketClient implements WebSocketListener {
         sendMessage("2");
     }
 
-    private void sendMessage(String msg) {
-        RequestBody body = RequestBody.create(WebSocket.TEXT, msg);
-        try {
-            mWebSocket.sendMessage(body);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public static void initWSClient() {
+        LRetrofit.getAPIService().init()
+                .flatMap(s -> {
+                    return LRetrofit.getAPIService().sid(mUid, "polling");
+                })
+                .flatMap(s -> {
+                    Pattern p = Pattern.compile("\\{(.*)\\}");
+                    Matcher m = p.matcher(s);
+                    if (!m.find()) throw new RuntimeException("wrong result");
+                    JSONObject json = new JSONObject(m.group());
+                    mSid = json.getString("sid");
+                    return LRetrofit.getAPIService().confirm(mUid, mSid, "polling");
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableObserver<String>() {
+                    @Override
+                    public void onNext(String value) {
+                        LLog.d(this.getClass().getSimpleName(), value);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        getInstance().initWebSocket(getFullUrl(mUid, mSid));
+                    }
+                });
     }
 }

@@ -8,6 +8,7 @@ import android.net.NetworkInfo;
 import com.facebook.drawee.backends.pipeline.Fresco;
 
 import me.ltype.werewolf.controller.LAccountManager;
+import me.ltype.werewolf.network.WebSocketClient;
 
 public class LApplication extends Application {
     private static Context mApplicationContext;
@@ -22,6 +23,7 @@ public class LApplication extends Application {
         mApplicationContext = this;
         LAccountManager.initialize(this);
         Fresco.initialize(this);
+        WebSocketClient.initWSClient();
     }
 
     public static boolean isNetworkAvailable() {

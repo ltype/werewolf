@@ -13,4 +13,7 @@
 
     <string name="nav_drawer_open">展开</string>
     <string name="nav_drawer_close">折叠</string>
+
+    <string name="waiting">募集中</string>
+    <string name="playing">游戏中</string>
 </resources>
