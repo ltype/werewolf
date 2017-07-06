@@ -16,4 +16,10 @@
 
     <string name="waiting">募集中</string>
     <string name="playing">游戏中</string>
+
+    <array name="rooms_status_tabs_name">
+        <item name="waiting">募集中</item>
+        <item name="old">过去的</item>
+        <item name="log">已结束</item>
+    </array>
 </resources>

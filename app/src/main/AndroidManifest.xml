@@ -21,7 +21,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".activity.RoomListActivity" android:label="@string/title_rooms" />
+        <activity android:name=".activity.RoomDetailActivity" android:label="@string/title_rooms" />
 
         <activity android:name=".activity.LobbyActivity" android:label="@string/title_lobby" />
 

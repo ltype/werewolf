@@ -8,7 +8,7 @@ public class MsgRequest {
     private static int len = 1;
     private long id = len++;
     private String m;
-    private String[] p;
+    private JSONArray p;
 
     public long getId() {
         return id;
@@ -22,11 +22,11 @@ public class MsgRequest {
         this.m = m;
     }
 
-    public String[] getP() {
+    public JSONArray getP() {
         return p;
     }
 
-    public void setP(String[] p) {
+    public void setP(JSONArray p) {
         this.p = p;
     }
 
@@ -35,9 +35,7 @@ public class MsgRequest {
         try {
             obj.put("m", m);
             obj.put("id", id);
-            JSONArray arr = new JSONArray();
-            for (String item : p) arr.put(item);
-            obj.put("p", arr);
+            obj.put("p", p);
         } catch (JSONException e) {
             e.printStackTrace();
         }

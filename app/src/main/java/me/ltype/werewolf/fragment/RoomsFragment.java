@@ -1,12 +1,17 @@
-package me.ltype.werewolf.activity;
+package me.ltype.werewolf.fragment;
 
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
+import org.json.JSONArray;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -25,7 +30,7 @@ import me.ltype.werewolf.network.WSCallBack;
 import me.ltype.werewolf.network.WebSocketClient;
 import me.ltype.werewolf.util.LUtils;
 
-public class RoomsActivity extends BaseActivity {
+public class RoomsFragment extends BaseFragment {
     @BindView(R.id.swipe_refresh_layout)
     SwipeRefreshLayout mSwipeRefreshLayout;
     @BindView(R.id.recycler_view)
@@ -34,11 +39,23 @@ public class RoomsActivity extends BaseActivity {
     private List<Room> mList = new ArrayList<>();
     private RoomsAdapter mAdapter = new RoomsAdapter(mList);
 
+    public static RoomsFragment newInstance(String status) {
+        RoomsFragment fragment = new RoomsFragment();
+        Bundle args = new Bundle();
+        args.putString("status", status);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_rooms);
-        ButterKnife.bind(this);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_rooms, container, false);
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ButterKnife.bind(this, view);
         mRecyclerView.addItemDecoration(new DividerItemDecoration(mRecyclerView.getContext(),
                 DividerItemDecoration.VERTICAL));
         mRecyclerView.setAdapter(mAdapter);
@@ -47,17 +64,13 @@ public class RoomsActivity extends BaseActivity {
         mSwipeRefreshLayout.setOnRefreshListener(this::doReqRoomList);
     }
 
-    @Override
-    public void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        doReqRoomList();
-    }
-
     private void doReqRoomList() {
         mSwipeRefreshLayout.setRefreshing(true);
         MsgRequest req = new MsgRequest();
         req.setM("game.rooms.getRooms");
-        String[] p = {null, "0"};
+        JSONArray p = new JSONArray();
+        p.put(getArguments().getString("status"));
+        p.put("0");
         req.setP(p);
         WebSocketClient.getInstance().sendMessage(req, new WSCallBack() {
             @Override
